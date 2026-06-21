@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chaveiro Pro — Gestão de Estoque e Vendas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --charcoal:#1C1A18;
+    --charcoal-2:#252220;
+    --bg:#FBF8F2;
+    --surface:#FFFFFF;
+    --line:#E8E1D3;
+    --brass:#B8924A;
+    --brass-light:#D9B872;
+    --brass-dark:#8F7138;
+    --ink:#2A2620;
+    --muted:#8A8478;
+    --danger:#B5542B;
+    --danger-bg:#F7E9E1;
+    --success:#4A6B4D;
+    --success-bg:#E7EEE3;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html,body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Fraunces',serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  #app{display:flex; min-height:100vh;}
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:230px; flex-shrink:0; background:var(--charcoal);
+    color:#EDE7DA; display:flex; flex-direction:column;
+    padding:22px 16px; position:sticky; top:0; height:100vh;
+  }
+  .brand{display:flex; align-items:center; gap:10px; padding:4px 8px 18px; border-bottom:1px solid #38332e; margin-bottom:14px;}
+  .brand-ring{
+    width:30px; height:30px; border-radius:50%; border:3px solid var(--brass);
+    position:relative; flex-shrink:0;
+  }
+  .brand-ring::after{
+    content:""; position:absolute; inset:8px; border-radius:50%; background:var(--charcoal);
+  }
+  .brand-text .t1{font-family:'Fraunces',serif; font-size:16.5px; font-weight:600; line-height:1.1; color:#fff;}
+  .brand-text .t2{font-size:10.5px; color:#A89C82; letter-spacing:.04em; text-transform:uppercase;}
+
+  nav{display:flex; flex-direction:column; gap:3px; margin-top:4px;}
+  .nav-item{
+    display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px;
+    color:#C9C0AC; font-size:14px; font-weight:500; cursor:pointer; border:none; background:none;
+    text-align:left; width:100%; transition:background .15s, color .15s; position:relative;
+  }
+  .nav-item:hover{background:#2C2824; color:#fff;}
+  .nav-item.active{background:var(--brass); color:var(--charcoal); font-weight:600;}
+  .nav-item .tag-hole{width:7px; height:7px; border-radius:50%; border:1.5px solid currentColor; flex-shrink:0; opacity:.7;}
+
+  .sidebar-footer{margin-top:auto; padding:14px 10px 4px; border-top:1px solid #38332e;}
+  .demo-pill{
+    display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600;
+    color:var(--brass-light); background:#2C2824; padding:5px 10px; border-radius:20px; letter-spacing:.03em;
+  }
+  .demo-pill .dot{width:6px; height:6px; border-radius:50%; background:#7CA67E;}
+  .sidebar-footer p{font-size:11px; color:#7C7363; margin:8px 4px 0; line-height:1.5;}
+
+  /* ---------- MAIN ---------- */
+  main{flex:1; padding:34px 40px 60px; max-width:1180px;}
+  .page-head{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px; gap:16px; flex-wrap:wrap;}
+  .page-head h1{font-size:28px; font-weight:600; margin:0 0 4px;}
+  .page-head .sub{color:var(--muted); font-size:13.5px; margin:0;}
+  .btn{
+    border:none; cursor:pointer; font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px;
+    padding:10px 18px; border-radius:8px; transition:transform .1s, opacity .15s; white-space:nowrap;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--charcoal); color:#fff;}
+  .btn-primary:hover{opacity:.88;}
+  .btn-brass{background:var(--brass); color:var(--charcoal);}
+  .btn-brass:hover{opacity:.88;}
+  .btn-ghost{background:transparent; color:var(--ink); border:1px solid var(--line);}
+  .btn-ghost:hover{background:var(--surface);}
+  .btn-danger-text{background:none; color:var(--danger); padding:6px 8px; font-size:12.5px;}
+  .btn-sm{padding:6px 12px; font-size:12.5px;}
+
+  .section{display:none;}
+  .section.active{display:block;}
+
+  /* ---------- METRIC / TAG CARDS ---------- */
+  .grid-metrics{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px;}
+  .tag-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:18px 18px 16px; position:relative; overflow:hidden;
+  }
+  .tag-card::before{
+    content:""; position:absolute; top:14px; left:14px; width:10px; height:10px;
+    border-radius:50%; background:var(--bg); border:1.5px solid var(--line);
+  }
+  .tag-card .label{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin:0 0 10px; padding-left:18px;}
+  .tag-card .value{font-family:'Fraunces',serif; font-size:26px; font-weight:600; margin:0; color:var(--ink);}
+  .tag-card .value.mono-num{font-family:'JetBrains Mono',monospace; font-weight:600;}
+  .tag-card .delta{font-size:11.5px; margin-top:6px; font-weight:600;}
+  .delta.up{color:var(--success);} .delta.warn{color:var(--danger);}
+
+  /* ---------- PANELS / TABLES ---------- */
+  .panel{background:var(--surface); border:1px solid var(--line); border-radius:12px; margin-bottom:24px; overflow:hidden;}
+  .panel-head{display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--line);}
+  .panel-head h3{font-size:15.5px; font-weight:600; margin:0;}
+  .panel-body{padding:18px 20px;}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  thead th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--muted); font-weight:600; padding:0 20px 10px; border-bottom:1px solid var(--line);
+  }
+  tbody td{padding:12px 20px; border-bottom:1px solid #F0EBE0; vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#FCFAF5;}
+  .num{font-family:'JetBrains Mono',monospace;}
+  .row-actions{display:flex; gap:6px;}
+  .icon-btn{
+    border:1px solid var(--line); background:var(--surface); border-radius:6px; width:30px; height:30px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px;
+  }
+  .icon-btn:hover{background:var(--bg);}
+
+  .badge{font-size:11px; font-weight:600; padding:4px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:5px;}
+  .badge-ok{background:var(--success-bg); color:var(--success);}
+  .badge-low{background:var(--danger-bg); color:var(--danger);}
+  .badge-cat{background:#F1ECDF; color:var(--brass-dark);}
+
+  .empty{padding:36px 20px; text-align:center; color:var(--muted); font-size:13.5px;}
+
+  /* search/filter bar */
+  .toolbar{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap;}
+  .input, select.input{
+    border:1px solid var(--line); border-radius:8px; padding:9px 13px; font-size:13.5px;
+    font-family:'Inter',sans-serif; background:var(--surface); color:var(--ink);
+  }
+  .input:focus, select.input:focus{outline:2px solid var(--brass-light); outline-offset:1px;}
+
+  /* ---------- STOCK BARS ---------- */
+  .stock-row{display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid #F0EBE0;}
+  .stock-row:last-child{border-bottom:none;}
+  .stock-info{flex:0 0 220px;}
+  .stock-info .name{font-weight:600; font-size:13.5px;}
+  .stock-info .cat{font-size:11.5px; color:var(--muted);}
+  .bar-track{flex:1; height:8px; background:#F0EBE0; border-radius:6px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:6px;}
+  .stock-qty{flex:0 0 110px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:13px;}
+  .stock-adjust{display:flex; gap:6px; flex:0 0 80px; justify-content:flex-end;}
+
+  /* ---------- VENDAS / CART ---------- */
+  .sale-layout{display:grid; grid-template-columns:1.3fr 1fr; gap:20px; align-items:start;}
+  .cart-item{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #F0EBE0; font-size:13.5px;}
+  .cart-item:last-child{border-bottom:none;}
+  .cart-item .ci-name{font-weight:600;}
+  .cart-item .ci-sub{color:var(--muted); font-size:11.5px;}
+  .cart-total-row{display:flex; justify-content:space-between; padding-top:14px; margin-top:6px; border-top:1px solid var(--line); font-size:15px; font-weight:700;}
+
+  /* ---------- BARS CHART ---------- */
+  .chart-row{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+  .chart-label{flex:0 0 150px; font-size:12.5px; color:var(--ink); font-weight:500;}
+  .chart-track{flex:1; background:#F0EBE0; border-radius:5px; height:14px; overflow:hidden;}
+  .chart-fill{height:100%; background:linear-gradient(90deg, var(--brass-dark), var(--brass-light)); border-radius:5px;}
+  .chart-val{flex:0 0 60px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);}
+
+  /* ---------- MODAL ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(28,26,24,.55); display:none; align-items:center; justify-content:center;
+    z-index:50; padding:20px;
+  }
+  .overlay.active{display:flex;}
+  .modal{
+    background:var(--surface); border-radius:14px; width:100%; max-width:440px; padding:26px 26px 22px;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal h3{margin:0 0 18px; font-size:18px; font-weight:600;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.03em;}
+  .field .input{width:100%;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:18px;}
+
+  .toast{
+    position:fixed; bottom:24px; right:24px; background:var(--charcoal); color:#fff; padding:13px 20px;
+    border-radius:9px; font-size:13.5px; font-weight:500; box-shadow:0 10px 30px rgba(0,0,0,.25);
+    display:flex; align-items:center; gap:8px; transform:translateY(20px); opacity:0; transition:.25s; z-index:60;
+  }
+  .toast.show{transform:translateY(0); opacity:1;}
+  .toast .dot{width:7px; height:7px; border-radius:50%; background:var(--brass-light);}
+
+  @media (max-width: 900px){
+    #app{flex-direction:column;}
+    .sidebar{width:100%; height:auto; position:relative; flex-direction:row; overflow-x:auto;}
+    .brand{display:none;}
+    nav{flex-direction:row;}
+    .sidebar-footer{display:none;}
+    main{padding:24px 18px 50px;}
+    .grid-metrics{grid-template-columns:1fr 1fr;}
+    .sale-layout{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-ring"></div>
+      <div class="brand-text">
+        <div class="t1">Chaveiro Pro</div>
+        <div class="t2">Estoque &amp; Vendas</div>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-item active" data-section="dashboard"><span class="tag-hole"></span>Visão geral</button>
+      <button class="nav-item" data-section="produtos"><span class="tag-hole"></span>Produtos</button>
+      <button class="nav-item" data-section="estoque"><span class="tag-hole"></span>Estoque</button>
+      <button class="nav-item" data-section="vendas"><span class="tag-hole"></span>Vendas</button>
+      <button class="nav-item" data-section="relatorios"><span class="tag-hole"></span>Relatórios</button>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="demo-pill"><span class="dot"></span>Modo demo</span>
+      <p>Dados de exemplo, sem login e sem pagamento. Os dados resetam ao recarregar a página.</p>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- DASHBOARD -->
+    <section class="section active" id="sec-dashboard">
+      <div class="page-head">
+        <div>
+          <h1>Visão geral</h1>
+          <p class="sub">Resumo do seu estoque e das vendas de chaveiros</p>
+        </div>
+      </div>
+
+      <div class="grid-metrics" id="metrics"></div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Mais vendidos</h3>
+          <span class="sub" style="font-size:12px;color:var(--muted)">por unidades vendidas</span>
+        </div>
+        <div class="panel-body" id="top-chart"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Alerta de estoque baixo</h3></div>
+        <div class="panel-body" id="low-stock-alert"></div>
+      </div>
+    </section>
+
+    <!-- PRODUTOS -->
+    <section class="section" id="sec-produtos">
+      <div class="page-head">
+        <div>
+          <h1>Produtos</h1>
+          <p class="sub">Cadastro de chaveiros, preços e estoque</p>
+        </div>
+        <button class="btn btn-brass" onclick="openProductModal()">+ Novo produto</button>
+      </div>
+
+      <div class="toolbar">
+        <input class="input" id="searchProduto" placeholder="Buscar por nome ou SKU..." oninput="renderProdutos()" style="flex:1; min-width:200px;">
+        <select class="input" id="filterCategoria" onchange="renderProdutos()">
+          <option value="">Todas as categorias</option>
+        </select>
+      </div>
+
+      <div class="panel">
+        <table>
+          <thead>
+            <tr><th>Produto</th><th>Categoria</th><th>SKU</th><th>Custo</th><th>Venda</th><th>Margem</th><th>Estoque</th><th></th></tr>
+          </thead>
+          <tbody id="produtos-tbody"></tbody>
+        </table>
+        <div id="produtos-empty" class="empty" style="display:none;">Nenhum produto encontrado.</div>
+      </div>
+    </section>
+
+    <!-- ESTOQUE -->
+    <section class="section" id="sec-estoque">
+      <div class="page-head">
+        <div>
+          <h1>Estoque</h1>
+          <p class="sub">Acompanhe níveis e ajuste entradas e saídas rapidamente</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-body" id="estoque-list"></div>
+      </div>
+    </section>
+
+    <!-- VENDAS -->
+    <section class="section" id="sec-vendas">
+      <div class="page-head">
+        <div>
+          <h1>Vendas</h1>
+          <p class="sub">Registre uma venda e acompanhe o histórico</p>
+        </div>
+      </div>
+
+      <div class="sale-layout">
+        <div class="panel">
+          <div class="panel-head"><h3>Adicionar item</h3></div>
+          <div class="panel-body">
+            <div class="field">
+              <label>Produto</label>
+              <select class="input" id="saleProduct" style="width:100%;"></select>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Quantidade</label>
+                <input class="input" id="saleQty" type="number" min="1" value="1">
+              </div>
+              <div class="field">
+                <label>Preço unitário</label>
+                <input class="input mono" id="salePrice" type="text" disabled>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;" onclick="addToCart()">Adicionar ao carrinho</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Carrinho</h3></div>
+          <div class="panel-body">
+            <div id="cart-list"></div>
+            <div id="cart-empty" class="empty" style="display:none; padding:18px 0;">Carrinho vazio. Adicione um produto.</div>
+            <div class="cart-total-row"><span>Total</span><span class="mono" id="cart-total">R$ 0,00</span></div>
+            <button class="btn btn-brass" style="width:100%; margin-top:14px;" onclick="finalizeSale()">Finalizar venda</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:20px;">
+        <div class="panel-head"><h3>Histórico de vendas</h3></div>
+        <table>
+          <thead><tr><th>Data</th><th>Itens</th><th>Qtd. total</th><th>Total</th></tr></thead>
+          <tbody id="sales-tbody"></tbody>
+        </table>
+        <div id="sales-empty" class="empty" style="display:none;">Nenhuma venda registrada ainda.</div>
+      </div>
+    </section>
+
+    <!-- RELATORIOS -->
+    <section class="section" id="sec-relatorios">
+      <div class="page-head">
+        <div>
+          <h1>Relatórios</h1>
+          <p class="sub">Visão consolidada por categoria e por dia</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Estoque por categoria</h3></div>
+        <table>
+          <thead><tr><th>Categoria</th><th>Produtos</th><th>Unidades em estoque</th><th>Valor em estoque (venda)</th></tr></thead>
+          <tbody id="cat-report-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Vendas por dia</h3></div>
+        <div class="panel-body" id="daily-chart"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL PRODUTO -->
+<div class="overlay" id="productOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">Novo produto</h3>
+    <input type="hidden" id="editId">
+    <div class="field">
+      <label>Nome do chaveiro</label>
+      <input class="input" id="fNome" placeholder="Ex: Chaveiro Resina 3D">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Categoria</label>
+        <input class="input" id="fCategoria" placeholder="Ex: Resina">
+      </div>
+      <div class="field">
+        <label>SKU</label>
+        <input class="input mono" id="fSku" placeholder="Auto">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Preço de custo (R$)</label>
+        <input class="input" id="fCusto" type="number" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label>Preço de venda (R$)</label>
+        <input class="input" id="fPreco" type="number" step="0.01" min="0">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Estoque atual</label>
+        <input class="input" id="fEstoque" type="number" min="0">
+      </div>
+      <div class="field">
+        <label>Estoque mínimo</label>
+        <input class="input" id="fMinimo" type="number" min="0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeProductModal()">Cancelar</button>
+      <button class="btn btn-brass" onclick="saveProduct()">Salvar produto</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
+
+<script>
+/* ===================== DADOS (em memória — demo) ===================== */
+let products = [
+  {id:1, nome:"Chaveiro Acrílico Personalizado", categoria:"Acrílico", sku:"CHV-AC-001", custo:2.50, preco:8.90, estoque:45, minimo:10},
+  {id:2, nome:"Chaveiro de Couro Gravado", categoria:"Couro", sku:"CHV-CR-002", custo:6.00, preco:18.00, estoque:22, minimo:8},
+  {id:3, nome:"Chaveiro Resina 3D", categoria:"Resina", sku:"CHV-RS-003", custo:4.20, preco:14.50, estoque:8, minimo:10},
+  {id:4, nome:"Chaveiro Metal Niquelado", categoria:"Metal", sku:"CHV-MT-004", custo:3.10, preco:11.90, estoque:30, minimo:10},
+  {id:5, nome:"Chaveiro Pet Personalizado", categoria:"Resina", sku:"CHV-RS-005", custo:5.50, preco:19.90, estoque:15, minimo:10},
+  {id:6, nome:"Chaveiro Mini Placa MDF", categoria:"MDF", sku:"CHV-MD-006", custo:1.80, preco:7.50, estoque:60, minimo:15},
+  {id:7, nome:"Chaveiro Bordado", categoria:"Tecido", sku:"CHV-TC-007", custo:4.00, preco:13.90, estoque:5, minimo:10},
+];
+let nextProductId = 8;
+
+let sales = [
+  {id:1, date:"2026-06-18", items:[{productId:1, qty:6, price:8.90},{productId:6, qty:4, price:7.50}], total:6*8.90+4*7.50},
+  {id:2, date:"2026-06-19", items:[{productId:3, qty:3, price:14.50}], total:3*14.50},
+  {id:3, date:"2026-06-19", items:[{productId:5, qty:2, price:19.90},{productId:2, qty:1, price:18.00}], total:2*19.90+18.00},
+  {id:4, date:"2026-06-20", items:[{productId:4, qty:5, price:11.90},{productId:1, qty:3, price:8.90}], total:5*11.90+3*8.90},
+  {id:5, date:"2026-06-21", items:[{productId:7, qty:2, price:13.90}], total:2*13.90},
+];
+let nextSaleId = 6;
+let cart = [];
+
+/* ===================== HELPERS ===================== */
+function brl(v){ return "R$ " + v.toFixed(2).replace(".", ","); }
+function byId(id){ return products.find(p => p.id === id); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2200);
+}
+function formatDate(d){
+  const [y,m,day] = d.split("-");
+  return `${day}/${m}/${y}`;
+}
+
+/* ===================== NAVEGAÇÃO ===================== */
+document.querySelectorAll('.nav-item').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById('sec-' + btn.dataset.section).classList.add('active');
+    renderAll();
+  });
+});
+
+/* ===================== DASHBOARD ===================== */
+function renderDashboard(){
+  const totalProdutos = products.length;
+  const valorEstoque = products.reduce((s,p)=> s + p.preco*p.estoque, 0);
+  const today = sales.filter(s=>s.date === "2026-06-21");
+  const vendasHoje = today.reduce((s,v)=> s+v.total, 0);
+  const faturamentoTotal = sales.reduce((s,v)=> s+v.total, 0);
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="tag-card">
+      <p class="label">Produtos cadastrados</p>
+      <p class="value">${totalProdutos}</p>
+    </div>
+    <div class="tag-card">
+      <p class="label">Valor em estoque</p>
+      <p class="value mono-num">${brl(valorEstoque)}</p>
+    </div>
+    <div class="tag-card">
+      <p class="label">Vendas hoje</p>
+      <p class="value mono-num">${brl(vendasHoje)}</p>
+      <p class="delta up">${today.length} venda(s) hoje</p>
+    </div>
+    <div class="tag-card">
+      <p class="label">Faturamento total</p>
+      <p class="value mono-num">${brl(faturamentoTotal)}</p>
+    </div>
+  `;
+
+  // top vendidos
+  const totals = {};
+  sales.forEach(s => s.items.forEach(it=>{
+    totals[it.productId] = (totals[it.productId]||0) + it.qty;
+  }));
+  const ranked = Object.entries(totals).map(([pid,qty])=>({p:byId(Number(pid)), qty}))
+    .filter(r=>r.p).sort((a,b)=>b.qty-a.qty).slice(0,5);
+  const maxQty = ranked.length ? ranked[0].qty : 1;
+  document.getElementById('top-chart').innerHTML = ranked.length ? ranked.map(r=>`
+    <div class="chart-row">
+      <span class="chart-label">${r.p.nome}</span>
+      <div class="chart-track"><div class="chart-fill" style="width:${(r.qty/maxQty*100).toFixed(0)}%"></div></div>
+      <span class="chart-val">${r.qty} un.</span>
+    </div>
+  `).join("") : `<div class="empty">Ainda não há vendas registradas.</div>`;
+
+  // estoque baixo
+  const low = products.filter(p=>p.estoque <= p.minimo);
+  document.getElementById('low-stock-alert').innerHTML = low.length ? `
+    <table>
+      <thead><tr><th>Produto</th><th>Estoque</th><th>Mínimo</th></tr></thead>
+      <tbody>
+        ${low.map(p=>`<tr><td>${p.nome}</td><td class="num">${p.estoque}</td><td class="num">${p.minimo}</td></tr>`).join("")}
+      </tbody>
+    </table>` : `<div class="empty">Nenhum produto com estoque baixo. 🎉</div>`;
+}
+
+/* ===================== PRODUTOS ===================== */
+function populateCategoriaFilter(){
+  const sel = document.getElementById('filterCategoria');
+  const current = sel.value;
+  const cats = [...new Set(products.map(p=>p.categoria))].sort();
+  sel.innerHTML = `<option value="">Todas as categorias</option>` + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
+  sel.value = current;
+}
+
+function renderProdutos(){
+  populateCategoriaFilter();
+  const search = (document.getElementById('searchProduto').value||"").toLowerCase();
+  const cat = document.getElementById('filterCategoria').value;
+  const list = products.filter(p=>
+    (p.nome.toLowerCase().includes(search) || p.sku.toLowerCase().includes(search)) &&
+    (!cat || p.categoria === cat)
+  );
+  const tbody = document.getElementById('produtos-tbody');
+  document.getElementById('produtos-empty').style.display = list.length ? 'none' : 'block';
+  tbody.innerHTML = list.map(p=>{
+    const margem = p.preco > 0 ? (((p.preco-p.custo)/p.preco)*100).toFixed(0) : 0;
+    const low = p.estoque <= p.minimo;
+    return `
+    <tr>
+      <td>${p.nome}</td>
+      <td><span class="badge badge-cat">${p.categoria}</span></td>
+      <td class="num">${p.sku}</td>
+      <td class="num">${brl(p.custo)}</td>
+      <td class="num">${brl(p.preco)}</td>
+      <td class="num">${margem}%</td>
+      <td class="num">${p.estoque} ${low ? '<span class="badge badge-low" style="margin-left:6px;">baixo</span>' : ''}</td>
+      <td>
+        <div class="row-actions">
+          <button class="icon-btn" title="Editar" onclick="openProductModal(${p.id})">✎</button>
+          <button class="icon-btn" title="Excluir" onclick="deleteProduct(${p.id})">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function openProductModal(id){
+  document.getElementById('productOverlay').classList.add('active');
+  if(id){
+    const p = byId(id);
+    document.getElementById('modalTitle').textContent = "Editar produto";
+    document.getElementById('editId').value = id;
+    document.getElementById('fNome').value = p.nome;
+    document.getElementById('fCategoria').value = p.categoria;
+    document.getElementById('fSku').value = p.sku;
+    document.getElementById('fCusto').value = p.custo;
+    document.getElementById('fPreco').value = p.preco;
+    document.getElementById('fEstoque').value = p.estoque;
+    document.getElementById('fMinimo').value = p.minimo;
+  } else {
+    document.getElementById('modalTitle').textContent = "Novo produto";
+    document.getElementById('editId').value = "";
+    ['fNome','fCategoria','fSku','fCusto','fPreco','fEstoque','fMinimo'].forEach(f=> document.getElementById(f).value = "");
+  }
+}
+function closeProductModal(){ document.getElementById('productOverlay').classList.remove('active'); }
+
+function saveProduct(){
+  const nome = document.getElementById('fNome').value.trim();
+  const categoria = document.getElementById('fCategoria').value.trim() || "Geral";
+  let sku = document.getElementById('fSku').value.trim();
+  const custo = parseFloat(document.getElementById('fCusto').value) || 0;
+  const preco = parseFloat(document.getElementById('fPreco').value) || 0;
+  const estoque = parseInt(document.getElementById('fEstoque').value) || 0;
+  const minimo = parseInt(document.getElementById('fMinimo').value) || 0;
+  const editId = document.getElementById('editId').value;
+
+  if(!nome){ showToast("Informe o nome do produto"); return; }
+  if(!sku){ sku = "CHV-" + categoria.slice(0,2).toUpperCase() + "-" + String(nextProductId).padStart(3,'0'); }
+
+  if(editId){
+    const p = byId(Number(editId));
+    Object.assign(p, {nome, categoria, sku, custo, preco, estoque, minimo});
+    showToast("Produto atualizado");
+  } else {
+    products.push({id:nextProductId++, nome, categoria, sku, custo, preco, estoque, minimo});
+    showToast("Produto cadastrado");
+  }
+  closeProductModal();
+  renderAll();
+}
+function deleteProduct(id){
+  if(!confirm("Excluir este produto?")) return;
+  products = products.filter(p=>p.id!==id);
+  renderAll();
+  showToast("Produto excluído");
+}
+
+/* ===================== ESTOQUE ===================== */
+function renderEstoque(){
+  const sorted = [...products].sort((a,b)=> (a.estoque/Math.max(a.minimo,1)) - (b.estoque/Math.max(b.minimo,1)));
+  document.getElementById('estoque-list').innerHTML = sorted.length ? sorted.map(p=>{
+    const ratio = Math.min((p.estoque / Math.max(p.minimo*2,1)) * 100, 100);
+    const low = p.estoque <= p.minimo;
+    return `
+    <div class="stock-row">
+      <div class="stock-info">
+        <div class="name">${p.nome}</div>
+        <div class="cat">${p.categoria} · mínimo ${p.minimo}</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${ratio}%; background:${low ? 'var(--danger)' : 'var(--success)'}"></div></div>
+      <div class="stock-qty">${p.estoque} un. ${low ? '<span class="badge badge-low">baixo</span>' : '<span class="badge badge-ok">ok</span>'}</div>
+      <div class="stock-adjust">
+        <button class="icon-btn" onclick="adjustStock(${p.id}, -1)">–</button>
+        <button class="icon-btn" onclick="adjustStock(${p.id}, 1)">+</button>
+      </div>
+    </div>`;
+  }).join("") : `<div class="empty">Nenhum produto cadastrado.</div>`;
+}
+function adjustStock(id, delta){
+  const p = byId(id);
+  p.estoque = Math.max(0, p.estoque + delta);
+  renderAll();
+}
+
+/* ===================== VENDAS ===================== */
+function populateSaleSelect(){
+  const sel = document.getElementById('saleProduct');
+  sel.innerHTML = products.map(p=>`<option value="${p.id}">${p.nome} (${p.estoque} em estoque)</option>`).join("");
+  updateSalePriceField();
+}
+document.getElementById('saleProduct') // bind later after DOM ready below
+function updateSalePriceField(){
+  const sel = document.getElementById('saleProduct');
+  const p = byId(Number(sel.value));
+  document.getElementById('salePrice').value = p ? brl(p.preco) : "";
+}
+
+function addToCart(){
+  const pid = Number(document.getElementById('saleProduct').value);
+  const qty = parseInt(document.getElementById('saleQty').value) || 1;
+  const p = byId(pid);
+  if(!p) return;
+  if(qty > p.estoque){ showToast("Estoque insuficiente para essa quantidade"); return; }
+  const existing = cart.find(c=>c.productId===pid);
+  if(existing){ existing.qty += qty; } else { cart.push({productId:pid, qty, price:p.preco}); }
+  renderCart();
+  showToast("Item adicionado ao carrinho");
+}
+function removeFromCart(pid){
+  cart = cart.filter(c=>c.productId!==pid);
+  renderCart();
+}
+function renderCart(){
+  const list = document.getElementById('cart-list');
+  document.getElementById('cart-empty').style.display = cart.length ? 'none' : 'block';
+  list.innerHTML = cart.map(c=>{
+    const p = byId(c.productId);
+    return `
+    <div class="cart-item">
+      <div>
+        <div class="ci-name">${p.nome}</div>
+        <div class="ci-sub">${c.qty} × ${brl(c.price)}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="mono">${brl(c.qty*c.price)}</span>
+        <button class="icon-btn" onclick="removeFromCart(${c.productId})">✕</button>
+      </div>
+    </div>`;
+  }).join("");
+  const total = cart.reduce((s,c)=> s + s*0 + c.qty*c.price, 0);
+  document.getElementById('cart-total').textContent = brl(total);
+}
+
+function finalizeSale(){
+  if(!cart.length){ showToast("Adicione produtos ao carrinho primeiro"); return; }
+  for(const c of cart){
+    const p = byId(c.productId);
+    if(c.qty > p.estoque){ showToast(`Estoque insuficiente: ${p.nome}`); return; }
+  }
+  cart.forEach(c=>{ byId(c.productId).estoque -= c.qty; });
+  const total = cart.reduce((s,c)=> s + c.qty*c.price, 0);
+  sales.push({id: nextSaleId++, date:"2026-06-21", items: cart.map(c=>({...c})), total});
+  cart = [];
+  renderAll();
+  showToast("Venda registrada com sucesso");
+}
+
+function renderSalesHistory(){
+  const tbody = document.getElementById('sales-tbody');
+  document.getElementById('sales-empty').style.display = sales.length ? 'none' : 'block';
+  const sorted = [...sales].sort((a,b)=> b.id - a.id);
+  tbody.innerHTML = sorted.map(s=>{
+    const names = s.items.map(it=> byId(it.productId)?.nome || "—").join(", ");
+    const qtyTotal = s.items.reduce((sum,it)=>sum+it.qty,0);
+    return `<tr><td>${formatDate(s.date)}</td><td>${names}</td><td class="num">${qtyTotal}</td><td class="num">${brl(s.total)}</td></tr>`;
+  }).join("");
+}
+
+/* ===================== RELATÓRIOS ===================== */
+function renderRelatorios(){
+  const cats = {};
+  products.forEach(p=>{
+    if(!cats[p.categoria]) cats[p.categoria] = {produtos:0, unidades:0, valor:0};
+    cats[p.categoria].produtos += 1;
+    cats[p.categoria].unidades += p.estoque;
+    cats[p.categoria].valor += p.estoque * p.preco;
+  });
+  document.getElementById('cat-report-tbody').innerHTML = Object.entries(cats).map(([cat,d])=>`
+    <tr><td>${cat}</td><td class="num">${d.produtos}</td><td class="num">${d.unidades}</td><td class="num">${brl(d.valor)}</td></tr>
+  `).join("") || `<tr><td colspan="4" class="empty">Sem dados.</td></tr>`;
+
+  const byDay = {};
+  sales.forEach(s=>{ byDay[s.date] = (byDay[s.date]||0) + s.total; });
+  const days = Object.keys(byDay).sort();
+  const max = days.length ? Math.max(...days.map(d=>byDay[d])) : 1;
+  document.getElementById('daily-chart').innerHTML = days.length ? days.map(d=>`
+    <div class="chart-row">
+      <span class="chart-label">${formatDate(d)}</span>
+      <div class="chart-track"><div class="chart-fill" style="width:${(byDay[d]/max*100).toFixed(0)}%"></div></div>
+      <span class="chart-val">${brl(byDay[d])}</span>
+    </div>
+  `).join("") : `<div class="empty">Sem vendas registradas ainda.</div>`;
+}
+
+/* ===================== RENDER ALL ===================== */
+function renderAll(){
+  renderDashboard();
+  renderProdutos();
+  renderEstoque();
+  populateSaleSelect();
+  renderCart();
+  renderSalesHistory();
+  renderRelatorios();
+}
+
+document.getElementById('saleProduct')?.addEventListener?.('change', updateSalePriceField);
+document.addEventListener('change', (e)=>{ if(e.target.id === 'saleProduct') updateSalePriceField(); });
+
+renderAll();
+</script>
+</body>
+</html>
