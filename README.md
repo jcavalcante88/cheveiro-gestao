@@ -6,9 +6,7 @@ Painel web de **gestão de produtos, estoque e vendas** para chaveiros e serralh
 
 > 💡 Existe também a versão **SaaS completa** deste sistema, com login, multi-cliente e cobrança via Stripe: [chaveiro-saas](https://github.com/jcavalcante88/chaveiro-saas).
 
-<!-- 📸 DICA: adicione um print do painel. Salve uma imagem na raiz e descomente:
-![Painel Chaveiro Pro](screenshot.png)
--->
+![Painel Chaveiro Pro — visão geral](screenshot.png)
 
 ---
 
